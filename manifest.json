@@ -1,0 +1,27 @@
+{
+	"name": "Twitch Chat Deduplicator",
+	"version": "0.1.0",
+	"manifest_version": 3,
+	"description": "Hides duplicate Twitch chat messages",
+	"icons": {
+		"16": "icon16.png",
+		"48": "icon48.png",
+		"128": "icon128.png"
+	},
+	"action": {
+		"default_icon": {
+			"16": "icon16.png",
+			"48": "icon48.png",
+			"128": "icon128.png"
+		},
+		"default_title": "Twitch Chat Deduplicator"
+	},
+	"permissions": ["storage"],
+	"content_scripts": [
+		{
+			"matches": ["*://www.twitch.tv/*"],
+			"js": ["content.js"]
+		}
+	],
+	"options_page": "options.html"
+}
