@@ -1,5 +1,5 @@
 // Twitch Chat Deduplicator
-// Handles real-time deduplication of Twitch chat messages
+// A Chrome extension that merges duplicate or similar messages in live Twitch chat to reduce spam and improve readability.
 let DEBUG = false;
 let MESSAGE_CACHE_TIME = 60000;
 let MAX_CACHE_SIZE = 10000;

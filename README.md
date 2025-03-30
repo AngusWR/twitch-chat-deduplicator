@@ -1,6 +1,6 @@
 # Twitch Chat Deduplicator
 
-A Chrome extension that cleans up repeated messages in live Twitch chat by hiding duplicates and grouping similar messages into a single entry.
+A Chrome extension that merges duplicate or similar messages in live Twitch chat to reduce spam and improve readability.
 
 ![Before and After](before_and_after.png)
 

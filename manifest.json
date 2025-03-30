@@ -2,7 +2,7 @@
 	"name": "Twitch Chat Deduplicator",
 	"version": "0.1.0",
 	"manifest_version": 3,
-	"description": "Hides duplicate Twitch chat messages",
+	"description": "A Chrome extension that merges duplicate or similar messages in live Twitch chat to reduce spam and improve readability.",
 	"icons": {
 		"16": "icon16.png",
 		"48": "icon48.png",
