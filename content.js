@@ -25,6 +25,10 @@ chrome.storage.sync.get(
 		USE_LEVENSHTEIN = settings.USE_LEVENSHTEIN;
 		LEVENSHTEIN_SIMILARITY_THRESHOLD = settings.LEVENSHTEIN_SIMILARITY_THRESHOLD;
 
+		// Detect logged-in user
+		detectUsernameFromDropdown();
+
+		// Start processing chat
 		waitForChat();
 		setInterval(checkForPageChange, 1000);
 		setInterval(cleanCache, 1000);
@@ -74,8 +78,6 @@ function cleanCache() {
 	}
 }
 
-setInterval(cleanCache, 1000);
-
 const observer = new MutationObserver((mutationsList) => {
 	for (const mutation of mutationsList) {
 		for (const addedNode of mutation.addedNodes) {
@@ -104,11 +106,22 @@ const observer = new MutationObserver((mutationsList) => {
 			if (!messageText) continue;
 
 			const normalisedText = normalise(messageText);
+			const authorSpan = addedNode.querySelector("[data-a-user]");
+			const author = authorSpan?.getAttribute("data-a-user") || "";
+			if (author.toLowerCase() === currentUser) {
+				log(`🧍 Skipping deduplication for current user (${currentUser}): "${messageText}"`);
+				continue;
+			}
 			let matchKey = null;
 			let isExact = false;
 
 			for (const [key, entry] of cache.entries()) {
 				const cachedText = normalise(entry.originalText);
+
+				// Skip comparing a message against itself same node
+				if (entry.node === addedNode) {
+					continue;
+				}
 
 				if (normalisedText === cachedText) {
 					matchKey = key;
@@ -126,11 +139,13 @@ const observer = new MutationObserver((mutationsList) => {
 						// Match messages like "???" and "??????"
 						matchKey = key;
 						isExact = false;
+						break;
 					} else if (USE_LEVENSHTEIN && normalisedText.length <= 100 && cachedText.length <= 100) {
 						const sim = similarity(normalisedText, cachedText);
 						if (sim >= LEVENSHTEIN_SIMILARITY_THRESHOLD) {
 							matchKey = key;
 							isExact = false;
+							break;
 						}
 					}
 				}
@@ -169,8 +184,9 @@ const observer = new MutationObserver((mutationsList) => {
 
 				// 🚫 Hide the duplicate message node
 				addedNode.style.display = "none";
+				log(`🚫 Hiding message from ${author}: "${messageText}" — matched with "${entry.originalText}"`);
 			} else {
-				log(`✉️ New message: "${messageText}"`);
+				log(`✉️ New message from ${author}: "${messageText}"`);
 
 				// Enforce max cache size (LRU-style)
 				if (cache.size >= MAX_CACHE_SIZE) {
@@ -193,6 +209,7 @@ const observer = new MutationObserver((mutationsList) => {
 					lastSeen: Date.now(),
 					node: addedNode,
 					originalText: messageText,
+					author: author,
 				});
 			}
 		}
@@ -211,13 +228,30 @@ function waitForChat() {
 }
 
 let currentPath = location.pathname;
-waitForChat();
-
-setInterval(() => {
+function checkForPageChange() {
 	if (location.pathname !== currentPath) {
 		log("🔄 Detected stream/page change");
 		currentPath = location.pathname;
 		observer.disconnect();
 		waitForChat();
 	}
-}, 1000);
+}
+
+let currentUser = "";
+function detectUsernameFromDropdown() {
+	const toggleBtn = document.querySelector('button[data-a-target="user-menu-toggle"]');
+	if (!toggleBtn) return;
+
+	toggleBtn.click();
+
+	const interval = setInterval(() => {
+		const nameEl = document.querySelector('[data-a-target="user-display-name"]');
+		if (nameEl) {
+			clearInterval(interval);
+			toggleBtn.click();
+
+			currentUser = nameEl.textContent.trim().toLowerCase();
+			log(`👤 Detected current user from dropdown: ${currentUser}`);
+		}
+	}, 250);
+}
